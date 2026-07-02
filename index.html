@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد إدارة الفواتير - KPI</title>
+    <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        :root {
+            --primary: #0F216B;
+            --secondary: #B8D0FF;
+            --light: #E1E8F8;
+            --accent1: #A6D6CC;
+            --accent2: #B594EA;
+            --dark: #0B121A;
+        }
+        body {
+            background: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            padding: 25px 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+        }
+        .last-update {
+            background: rgba(255,255,255,0.15);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .last-update span {
+            color: var(--accent1);
+            font-weight: bold;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 1200px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(15, 33, 107, 0.1);
+        }
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .form-group label .required {
+            color: #c62828;
+            margin-right: 3px;
+        }
+        .form-group label .optional {
+            color: #666;
+            font-weight: normal;
+            font-size: 0.8rem;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 12px 15px;
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: white;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 33, 107, 0.1);
+        }
+        .form-group select {
+            cursor: pointer;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--dark);
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: var(--accent1);
+            color: var(--dark);
+        }
+        .btn-success:hover {
+            background: #8ec4b8;
+        }
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+        .btn-secondary:hover {
+            background: #a0c4ff;
+        }
+        .btn-danger {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .btn-danger:hover {
+            background: #ef9a9a;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, var(--secondary), var(--light));
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .stat-card.accent1 {
+            background: linear-gradient(135deg, var(--accent1), #d4ebe6);
+        }
+        .stat-card.accent2 {
+            background: linear-gradient(135deg, var(--accent2), #dfd0f5);
+        }
+        .stat-card.dark {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+        }
+        .stat-card.dark h3, .stat-card.dark p {
+            color: white;
+        }
+        .stat-card h3 {
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            color: var(--dark);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin-top: 15px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            min-width: 1100px;
+        }
+        th, td {
+            padding: 12px 10px;
+            text-align: right;
+            border-bottom: 1px solid var(--secondary);
+            white-space: nowrap;
+        }
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: var(--light);
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-compliant {
+            background: var(--accent1);
+            color: var(--dark);
+        }
+        .status-non-compliant {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .compliance-100 {
+            background: var(--accent1);
+            color: var(--dark);
+            font-weight: bold;
+        }
+        .compliance-less {
+            background: #ffcdd2;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .action-btn {
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            margin: 0 2px;
+        }
+        .delete-btn {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .delete-btn:hover {
+            background: #ef9a9a;
+        }
+        .edit-btn {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+        .edit-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-section select, .filter-section input {
+            padding: 10px 15px;
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.success {
+            background: #2e7d32;
+        }
+        .toast.error {
+            background: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-section">
+            <h1>🧾 داشبورد إدارة الفواتير - KPI</h1>
+        </div>
+        <div class="last-update">
+            <div>آخر تحديث: <span id="lastUpdateTime">لم يتم التحديث بعد</span></div>
+            <div>بواسطة: <span id="lastUpdateManager">-</span></div>
+        </div>
+    </div>
+    <div class="container">
+        <!-- نموذج إضافة فاتورة -->
+        <div class="card">
+            <h2>➕ إضافة فاتورة جديدة</h2>
+            <form id="invoiceForm">
+                <div class="form-grid">
+                    <!-- مدير المشروع - قائمة منسدلة - إلزامي -->
+                    <div class="form-group">
+                        <label><span class="required">*</span> Project Manager</label>
+                        <select id="projectManager" required>
+                            <option value="">-- اختر المدير --</option>
+                            <option value="balqarni">balqarni</option>
+                            <option value="malsaidan">malsaidan</option>
+                            <option value="malahmadi">malahmadi</option>
+                            <option value="Fhalotaibi">Fhalotaibi</option>
+                            <option value="halmorished">halmorished</option>
+                            <option value="Mfalotaibi">Mfalotaibi</option>
+                            <option value="raldarami">raldarami</option>
+                            <option value="Talmuhaysin">Talmuhaysin</option>
+                        </select>
+                    </div>
+                    <!-- اسم/رقم المشروع - حقل نصي فارغ - إلزامي -->
+                    <div class="form-group">
+                        <label><span class="required">*</span> Project Name</label>
+                        <input type="text" id="projectName" required placeholder="أدخل اسم أو رقم المشروع">
+                    </div>
+                    <!-- تاريخ COC - قائمة تاريخ - إلزامي -->
+                    <div class="form-group">
+                        <label><span class="required">*</span> COC Date</label>
+                        <input type="date" id="cocDate" required>
+                    </div>
+                    <!-- تاريخ الفاتورة الفعلي - قائمة تاريخ - إلزامي -->
+                    <div class="form-group">
+                        <label><span class="required">*</span> Actual Invoice Date</label>
+                        <input type="date" id="actualInvoiceDate" required>
+                    </div>
+                    <!-- تاريخ طلب الفاتورة من المالية - قائمة تاريخ - اختياري -->
+                    <div class="form-group">
+                        <label>Invoice Request Date from Finance <span class="optional">(اختياري)</span></label>
+                        <input type="date" id="financeRequestDate">
+                    </div>
+                    <!-- ملاحظات - حقل نصي - اختياري -->
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Comment <span class="optional">(اختياري)</span></label>
+                        <textarea id="comment" placeholder="أي ملاحظات إضافية..."></textarea>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">➕ إضافة الفاتورة</button>
+                    <button type="reset" class="btn btn-secondary">🔄 مسح الحقول</button>
+                </div>
+            </form>
+            <hr style="margin: 25px 0; border: none; border-top: 1px solid var(--secondary);">
+            <div class="btn-group">
+                <button type="button" class="btn btn-success" onclick="exportData()">📥 تصدير Excel</button>
+                <button type="button" class="btn btn-danger" onclick="clearAllData()">🗑️ مسح جميع البيانات</button>
+            </div>
+        </div>
+        <!-- الإحصائيات -->
+        <div class="card">
+            <h2>📊 إحصائيات عامة</h2>
+            <div class="stats-grid">
+                <div class="stat-card dark">
+                    <h3 id="totalInvoices">0</h3>
+                    <p>إجمالي الفواتير</p>
+                </div>
+                <div class="stat-card accent1">
+                    <h3 id="compliantCount">0</h3>
+                    <p>مطابق 100%</p>
+                </div>
+                <div class="stat-card accent2">
+                    <h3 id="nonCompliantCount">0</h3>
+                    <p>غير مطابق</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="complianceRate">0%</h3>
+                    <p>نسبة الالتزام</p>
+                </div>
+            </div>
+            <h3 style="color: var(--primary); margin: 20px 0 10px;">📈 توزيع الالتزام</h3>
+            <div class="chart-container">
+                <canvas id="totalChart"></canvas>
+            </div>
+        </div>
+        <!-- الرسم البياني الأسبوعي -->
+        <div class="card">
+            <h2>📅 الفواتير الأسبوعية (الأحد - الخميس)</h2>
+            <div class="chart-container">
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+        <!-- أداء المدراء -->
+        <div class="card">
+            <h2>👥 أداء مدراء المشاريع</h2>
+            <div class="chart-container">
+                <canvas id="managersChart"></canvas>
+            </div>
+        </div>
+        <!-- جدول البيانات -->
+        <div class="card full-width">
+            <h2>📋 سجل الفواتير</h2>
+            <div class="filter-section">
+                <select id="filterManager" onchange="refreshDashboard()">
+                    <option value="">جميع المدراء</option>
+                    <option value="balqarni">balqarni</option>
+                    <option value="malsaidan">malsaidan</option>
+                    <option value="malahmadi">malahmadi</option>
+                    <option value="Fhalotaibi">Fhalotaibi</option>
+                    <option value="halmorished">halmorished</option>
+                    <option value="Mfalotaibi">Mfalotaibi</option>
+                    <option value="raldarami">raldarami</option>
+                    <option value="Talmuhaysin">Talmuhaysin</option>
+                </select>
+                <select id="filterStatus" onchange="refreshDashboard()">
+                    <option value="">جميع الحالات</option>
+                    <option value="compliant">مطابق 100% فقط</option>
+                    <option value="non-compliant">غير مطابق فقط</option>
+                </select>
+                <input type="text" id="searchInput" placeholder="🔍 بحث بالمشروع..." oninput="refreshDashboard()">
+            </div>
+            <div class="table-container table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Project Manager</th>
+                            <th>Project Name</th>
+                            <th>COC Date</th>
+                            <th>Actual Invoice Date</th>
+                            <th>Invoice Request from Finance</th>
+                            <th>Invoices Issued within 5Days</th>
+                            <th>Compliance</th>
+                            <th>Comment</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+    <script>
+        let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+        let weeklyChart, totalChart, managersChart;
+        let editingId = null;
+        const managers = ['balqarni', 'malsaidan', 'malahmadi', 'Fhalotaibi', 'halmorished', 'Mfalotaibi', 'raldarami', 'Talmuhaysin'];
+        // إظهار Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        // تهيئة الرسوم البيانية
+        function initCharts() {
+            // الرسم الأسبوعي
+            const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+            weeklyChart = new Chart(weeklyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'],
+                    datasets: [
+                        {
+                            label: 'مطابق 100%',
+                            data: [0, 0, 0, 0, 0],
+                            backgroundColor: '#A6D6CC',
+                            borderRadius: 5
+                        },
+                        {
+                            label: 'غير مطابق',
+                            data: [0, 0, 0, 0, 0],
+                            backgroundColor: '#B594EA',
+                            borderRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+            // الرسم الدائري
+            const totalCtx = document.getElementById('totalChart').getContext('2d');
+            totalChart = new Chart(totalCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['مطابق 100% (≤5 أيام)', 'غير مطابق (>5 أيام)'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#A6D6CC', '#B594EA'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            // رسم أداء المدراء
+            const managersCtx = document.getElementById('managersChart').getContext('2d');
+            managersChart = new Chart(managersCtx, {
+                type: 'bar',
+                data: {
+                    labels: managers,
+                    datasets: [{
+                        label: 'نسبة الالتزام %',
+                        data: Array(8).fill(0),
+                        backgroundColor: '#0F216B',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+        // حساب عدد الأيام بين COC و Actual Invoice Date
+        function calculateDays(cocDate, actualInvoiceDate) {
+            if (!cocDate || !actualInvoiceDate) return null;
+            const coc = new Date(cocDate);
+            const actual = new Date(actualInvoiceDate);
+            const diffTime = actual - coc;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+        // التحقق من الالتزام (5 أيام أو أقل = 100%)
+        function isCompliant(days) {
+            if (days === null) return false;
+            return days <= 5;
+        }
+        // إضافة/تعديل فاتورة
+        document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const invoice = {
+                id: editingId || Date.now(),
+                projectManager: document.getElementById('projectManager').value,
+                projectName: document.getElementById('projectName').value,
+                cocDate: document.getElementById('cocDate').value,
+                actualInvoiceDate: document.getElementById('actualInvoiceDate').value,
+                financeRequestDate: document.getElementById('financeRequestDate').value || null,
+                comment: document.getElementById('comment').value || '',
+                createdAt: editingId ? invoices.find(i => i.id === editingId)?.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            if (editingId) {
+                // تعديل
+                const index = invoices.findIndex(i => i.id === editingId);
+                if (index !== -1) {
+                    invoices[index] = invoice;
+                }
+                editingId = null;
+                showToast('✅ تم تعديل الفاتورة بنجاح');
+            } else {
+                // إضافة جديدة
+                invoices.push(invoice);
+                showToast('✅ تم إضافة الفاتورة بنجاح');
+            }
+            saveData();
+            updateLastUpdate(invoice.projectManager);
+            this.reset();
+            refreshDashboard();
+        });
+        // حفظ البيانات
+        function saveData() {
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+        }
+        // تحديث آخر تحديث
+        function updateLastUpdate(manager) {
+            const now = new Date();
+            const formatted = now.toLocaleString('ar-SA', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            document.getElementById('lastUpdateTime').textContent = formatted;
+            document.getElementById('lastUpdateManager').textContent = manager;
+            localStorage.setItem('lastUpdate', JSON.stringify({ time: formatted, manager }));
+        }
+        // فلترة البيانات
+        function getFilteredInvoices() {
+            const managerFilter = document.getElementById('filterManager').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            return invoices.filter(inv => {
+                const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                const compliant = isCompliant(days);
+                
+                if (managerFilter && inv.projectManager !== managerFilter) return false;
+                if (statusFilter === 'compliant' && !compliant) return false;
+                if (statusFilter === 'non-compliant' && compliant) return false;
+                if (searchTerm) {
+                    const searchFields = [inv.projectManager, inv.projectName, inv.comment].join(' ').toLowerCase();
+                    if (!searchFields.includes(searchTerm)) return false;
+                }
+                return true;
+            });
+        }
+        // تحديث الداشبورد
+        function refreshDashboard() {
+            updateTable();
+            updateStats();
+            updateCharts();
+        }
+        // تحديث الجدول
+        function updateTable() {
+            const tbody = document.getElementById('invoiceTable');
+            tbody.innerHTML = '';
+            const filtered = getFilteredInvoices();
+            filtered.forEach((inv, index) => {
+                const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                const compliant = isCompliant(days);
+                const daysDisplay = days !== null ? days : '-';
+                const complianceDisplay = days !== null ? (compliant ? '100%' : `${Math.max(0, Math.round((5/days) * 100))}%`) : '-';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${inv.projectManager}</td>
+                    <td>${inv.projectName}</td>
+                    <td>${inv.cocDate}</td>
+                    <td>${inv.actualInvoiceDate}</td>
+                    <td>${inv.financeRequestDate || '-'}</td>
+                    <td style="font-weight: bold; color: ${compliant ? '#2e7d32' : '#c62828'}">${daysDisplay} يوم</td>
+                    <td><span class="status-badge ${compliant ? 'compliance-100' : 'compliance-less'}">${complianceDisplay}</span></td>
+                    <td>${inv.comment || '-'}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editInvoice(${inv.id})">✏️</button>
+                        <button class="action-btn delete-btn" onclick="deleteInvoice(${inv.id})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: #666;">لا توجد بيانات</td></tr>';
+            }
+        }
+        // تحديث الإحصائيات
+        function updateStats() {
+            const total = invoices.length;
+            const compliant = invoices.filter(inv => {
+                const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                return isCompliant(days);
+            }).length;
+            const rate = total > 0 ? Math.round((compliant / total) * 100) : 0;
+            document.getElementById('totalInvoices').textContent = total;
+            document.getElementById('compliantCount').textContent = compliant;
+            document.getElementById('nonCompliantCount').textContent = total - compliant;
+            document.getElementById('complianceRate').textContent = rate + '%';
+        }
+        // تحديث الرسوم البيانية
+        function updateCharts() {
+            // الرسم الأسبوعي (بناءً على Actual Invoice Date)
+            const weeklyCompliant = [0, 0, 0, 0, 0];
+            const weeklyNonCompliant = [0, 0, 0, 0, 0];
+            
+            invoices.forEach(inv => {
+                const day = new Date(inv.actualInvoiceDate).getDay();
+                const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                if (day >= 0 && day <= 4) {
+                    if (isCompliant(days)) weeklyCompliant[day]++;
+                    else weeklyNonCompliant[day]++;
+                }
+            });
+            
+            weeklyChart.data.datasets[0].data = weeklyCompliant;
+            weeklyChart.data.datasets[1].data = weeklyNonCompliant;
+            weeklyChart.update();
+            // الرسم الدائري
+            const compliant = invoices.filter(inv => {
+                const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                return isCompliant(days);
+            }).length;
+            totalChart.data.datasets[0].data = [compliant, invoices.length - compliant];
+            totalChart.update();
+            // رسم أداء المدراء
+            const managerRates = managers.map(manager => {
+                const managerInvoices = invoices.filter(inv => inv.projectManager === manager);
+                if (managerInvoices.length === 0) return 0;
+                const compliantCount = managerInvoices.filter(inv => {
+                    const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                    return isCompliant(days);
+                }).length;
+                return Math.round((compliantCount / managerInvoices.length) * 100);
+            });
+            managersChart.data.datasets[0].data = managerRates;
+            managersChart.data.datasets[0].backgroundColor = managerRates.map(rate => 
+                rate >= 80 ? '#A6D6CC' : rate >= 50 ? '#B8D0FF' : '#B594EA'
+            );
+            managersChart.update();
+        }
+        // حذف فاتورة
+        function deleteInvoice(id) {
+            if (confirm('هل أنت متأكد من حذف هذه الفاتورة؟')) {
+                invoices = invoices.filter(inv => inv.id !== id);
+                saveData();
+                refreshDashboard();
+                showToast('🗑️ تم حذف الفاتورة', 'error');
+            }
+        }
+        // تعديل فاتورة
+        function editInvoice(id) {
+            const invoice = invoices.find(inv => inv.id === id);
+            if (!invoice) return;
+            editingId = id;
+            
+            document.getElementById('projectManager').value = invoice.projectManager;
+            document.getElementById('projectName').value = invoice.projectName;
+            document.getElementById('cocDate').value = invoice.cocDate;
+            document.getElementById('actualInvoiceDate').value = invoice.actualInvoiceDate;
+            document.getElementById('financeRequestDate').value = invoice.financeRequestDate || '';
+            document.getElementById('comment').value = invoice.comment || '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('✏️ قم بتعديل البيانات ثم اضغط إضافة', 'success');
+        }
+        // مسح جميع البيانات
+        function clearAllData() {
+            if (confirm('⚠️ هل أنت متأكد من مسح جميع البيانات؟ لا يمكن التراجع!')) {
+                invoices = [];
+                saveData();
+                localStorage.removeItem('lastUpdate');
+                document.getElementById('lastUpdateTime').textContent = 'لم يتم التحديث بعد';
+                document.getElementById('lastUpdateManager').textContent = '-';
+                refreshDashboard();
+                showToast('🗑️ تم مسح جميع البيانات', 'error');
+            }
+        }
+        // تصدير البيانات إلى CSV
+        function exportData() {
+            if (invoices.length === 0) {
+                showToast('❌ لا توجد بيانات للتصدير', 'error');
+                return;
+            }
+            let csv = '\uFEFF'; // BOM for Arabic
+            csv += 'Project Manager,Project Name,COC Date,Actual Invoice Date,Invoice Request from Finance,Days,Compliance,Comment\n';
+            
+            invoices.forEach(inv => {
+                const days = calculateDays(inv.cocDate, inv.actualInvoiceDate);
+                const compliance = days !== null ? (isCompliant(days) ? '100%' : `${Math.max(0, Math.round((5/days) * 100))}%`) : '-';
+                csv += `${inv.projectManager},${inv.projectName},${inv.cocDate},${inv.actualInvoiceDate},${inv.financeRequestDate || ''},${days !== null ? days : ''},${compliance},"${inv.comment || ''}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `invoices_KPI_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showToast('📥 تم تصدير البيانات بنجاح');
+        }
+        // تحميل البيانات عند بدء التشغيل
+        window.onload = function() {
+            initCharts();
+            refreshDashboard();
+            
+            const lastUpdate = JSON.parse(localStorage.getItem('lastUpdate'));
+            if (lastUpdate) {
+                document.getElementById('lastUpdateTime').textContent = lastUpdate.time;
+                document.getElementById('lastUpdateManager').textContent = lastUpdate.manager;
+            }
+        };
+    </script>
+</body>
+</html>
